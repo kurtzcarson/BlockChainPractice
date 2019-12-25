@@ -17,12 +17,26 @@ class Block {
     this.data = data;
     this.previousHash = previousHash;
     this.hash = this.calculateHash();
+    this.nonce = 0; //should make this random later
   }
 
   //can consider building my own hashing function instead of library
   calculateHash() {
     //checks data of block and creates unique hashCode for identification
-    return SHA256( this.index + this.previousHash + this.timeStamp + JSON.stringify(this.data)).toString();
+    return SHA256( this.index + this.previousHash + this.timeStamp + JSON.stringify(this.data) + this.nonce).toString();
+  }
+
+  mineBlock(difficulty) {
+    //proof of work or mining/ set difficulty so steady amount of new blocks/ no overflow or hacking
+
+    //guarentees all hash values are below some target hash...keeps calculating until finds a nonce that derives small hash based on unique data
+    while (this.hash.substring(0, difficulty) != new Array(difficulty + 1).join("0")) {
+      this.hash = this.calculateHash();
+      this.nonce++; // avoids infinite while loop
+    }
+
+    console.log("Block mined: " + this.hash);
+
   }
 }
 
@@ -31,6 +45,9 @@ class Block {
     constructor() {
       //first block on chain is called genesis block and initialized manually
       this.chain = [this.createGenesisBlock()]; // consider making this a LinkedList
+
+      //helps control how fast new blocks can be added to the blockchain
+      this.difficulty = 5;
     }
 
     createGenesisBlock() {
@@ -45,7 +62,7 @@ class Block {
       //really should have more checks in place before adding to the chain
 
       newBlock.previousHash = this.getLatestBlock().hash;
-      newBlock.hash = newBlock.calculateHash();
+      newBlock.mineBlock(this.difficulty);
       this.chain.push(newBlock);
     }
 
@@ -70,21 +87,27 @@ class Block {
     }
   }
 
+
+
+
   let myChain = new BlockChain();
 
   //data can be anything I want
+  console.log("Mining Block 1...");
   myChain.addBlock( new Block(1, "12/23/2019", {amount: 4}));
+
+  console.log("Mining Block 2...");
   myChain.addBlock( new Block(2, "12/24 /2019", {amount: 10}) );
 
-  console.log('Is blockchain valid? ' + myChain.isChainValid());
+
 
   //never delete or change a block to keep the blockChain valid/true
-  myChain.chain[1].data = { amount: 100 };
-  myChain.chain[1].hash = myChain.chain[1].calculateHash(); // the relationship with previousBlock now broken
-
-  console.log('Is blockchain valid? ' + myChain.isChainValid());
-
-  console.log(JSON.stringify(myChain, null, 4));
+  // myChain.chain[1].data = { amount: 100 };
+  // myChain.chain[1].hash = myChain.chain[1].calculateHash(); // the relationship with previousBlock now broken
+  //
+  // console.log('Is blockchain valid? ' + myChain.isChainValid());
+  //
+  // console.log(JSON.stringify(myChain, null, 4));
 
   /*
   *
