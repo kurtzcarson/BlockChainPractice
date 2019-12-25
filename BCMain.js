@@ -11,10 +11,9 @@ class Block {
   //previousHash: string that contains hash of block before
 
 
-  constructor(index, timeStamp, data, previousHash = '') {
-    this.index = index;
+  constructor(timeStamp, transactions, previousHash = '') {
     this.timeStamp = timeStamp;
-    this.data = data;
+    this.transactions = transactions;
     this.previousHash = previousHash;
     this.hash = this.calculateHash();
     this.nonce = 0; //should make this random later
@@ -23,7 +22,7 @@ class Block {
   //can consider building my own hashing function instead of library
   calculateHash() {
     //checks data of block and creates unique hashCode for identification
-    return SHA256( this.index + this.previousHash + this.timeStamp + JSON.stringify(this.data) + this.nonce).toString();
+    return SHA256( this.previousHash + this.timeStamp + JSON.stringify(this.transactions) + this.nonce).toString();
   }
 
   mineBlock(difficulty) {
@@ -47,16 +46,53 @@ class Block {
       this.chain = [this.createGenesisBlock()]; // consider making this a LinkedList
 
       //helps control how fast new blocks can be added to the blockchain
-      this.difficulty = 5;
+      this.difficulty = 2;
+
+      //an array that holds all transactions that have yet to be processed as previous blocks are being mined
+      this.pendingTransactions = [];
+      this.miningReward = 100;
     }
 
     createGenesisBlock() {
-      return new Block(0, "12,23/19", "Genesis Block", "0");
+      return new Block("12,23/19", "Genesis Block", "0");
     }
 
     getLatestBlock() {
       return this.chain[this.chain.length - 1]
     }
+
+    minePendingTransactions(miningRewardAddress) {
+      //if person with mining address successfully finds hash first, then send mining reward to them
+
+
+      let block = new Block( Date.now(), this.pendingTransactions )
+      block.mineBlock(difficulty);
+
+      console.log("Block successfully mined.");
+      this.chain.push(block);
+
+      //does not have a from address/ algorithm just gives it to you
+      this.pendingTransactions = [ new Transaction(null, miningRewardAddress, this.miningReward ) ];
+    }
+
+    createTransaction(transaction) {
+      this.pendingTransactions.push(transaction);
+    }
+
+    getBalanceOfAddress(address) {
+      //go through entire blockChain and find all blocks associated with your address to find your balance
+
+      let balance = 0;
+
+      //should consider improving this run time/ each person has calculated balance
+      for (const block of this.chain) {
+        for (const transaction of block.transaction) {
+
+        }
+      }
+
+    }
+
 
     addBlock(newBlock) {
       //really should have more checks in place before adding to the chain
@@ -87,31 +123,56 @@ class Block {
     }
   }
 
+  class Transaction {
+
+    constructor(fromAddress, toAddress, amount) {
+      this.fromAddress = fromAddress;
+      this.toAddress = toAddress;
+      this.amount = amount;
+    }
+  }
+
 
 
 
   let myChain = new BlockChain();
 
-  //data can be anything I want
-  console.log("Mining Block 1...");
-  myChain.addBlock( new Block(1, "12/23/2019", {amount: 4}));
-
-  console.log("Mining Block 2...");
-  myChain.addBlock( new Block(2, "12/24 /2019", {amount: 10}) );
 
 
 
-  //never delete or change a block to keep the blockChain valid/true
-  // myChain.chain[1].data = { amount: 100 };
-  // myChain.chain[1].hash = myChain.chain[1].calculateHash(); // the relationship with previousBlock now broken
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // //data can be anything I want
+  // console.log("Mining Block 1...");
+  // myChain.addBlock( new Block(1, "12/23/2019", {amount: 4}));
   //
-  // console.log('Is blockchain valid? ' + myChain.isChainValid());
+  // console.log("Mining Block 2...");
+  // myChain.addBlock( new Block(2, "12/24 /2019", {amount: 10}) );
   //
-  // console.log(JSON.stringify(myChain, null, 4));
-
-  /*
-  *
-  * Things to implement: block breaks chain need to 'rollback changes' and put blockchain back into original state
-  * Proof of work/ peer to peer network/ need to check if have funds to make a transaction
-  *
-  */
+  //
+  //
+  // //never delete or change a block to keep the blockChain valid/true
+  // // myChain.chain[1].data = { amount: 100 };
+  // // myChain.chain[1].hash = myChain.chain[1].calculateHash(); // the relationship with previousBlock now broken
+  // //
+  // // console.log('Is blockchain valid? ' + myChain.isChainValid());
+  // //
+  // // console.log(JSON.stringify(myChain, null, 4));
+  //
+  // /*
+  // *
+  // * Things to implement: block breaks chain need to 'rollback changes' and put blockchain back into original state
+  // * Proof of work/ peer to peer network/ need to check if have funds to make a transaction
+  // *
+  // */
