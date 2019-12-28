@@ -45,12 +45,12 @@ class Block {
       //first block on chain is called genesis block and initialized manually
       this.chain = [this.createGenesisBlock()]; // consider making this a LinkedList
 
-      //helps control how fast new blocks can be added to the blockchain
-      this.difficulty = 2;
+      //helps control howcleard fast new blocks can be added to the blockchain
+      this.difficulty = 5;
 
       //an array that holds all transactions that have yet to be processed as previous blocks are being mined
       this.pendingTransactions = [];
-      this.miningReward = 100;
+      this.miningReward = 50;
     }
 
     createGenesisBlock() {
@@ -64,9 +64,8 @@ class Block {
     minePendingTransactions(miningRewardAddress) {
       //if person with mining address successfully finds hash first, then send mining reward to them
 
-
       let block = new Block( Date.now(), this.pendingTransactions )
-      block.mineBlock(difficulty);
+      block.mineBlock(this.difficulty);
 
       console.log("Block successfully mined.");
       this.chain.push(block);
@@ -76,7 +75,9 @@ class Block {
     }
 
     createTransaction(transaction) {
+
       this.pendingTransactions.push(transaction);
+      //need to guarentee that amount of fromAddress is valid and can be paid
     }
 
     getBalanceOfAddress(address) {
@@ -86,11 +87,16 @@ class Block {
 
       //should consider improving this run time/ each person has calculated balance
       for (const block of this.chain) {
-        for (const transaction of block.transaction) {
+        for (const transaction of block.transactions) {
 
+          if (transaction.toAddress == address) {
+            balance += transaction.amount;
+          }
+          else if (transaction.fromAddress == address) {
+            balance -= transaction.amount;
+          }
         }
-      }
-
+      } return balance;
     }
 
 
@@ -136,6 +142,26 @@ class Block {
 
 
   let myChain = new BlockChain();
+
+  //names should be the public key of someone's wallet
+  //these transactions will be pending until they are mined into a block
+  myChain.createTransaction( new Transaction( 'Mark', 'Henry', 100));
+  myChain.createTransaction( new Transaction( 'Henry', 'Mark', 20));
+
+  console.log( '\nStarting the miner.');
+  myChain.minePendingTransactions('Carson Address');
+
+  console.log('\n Balance of Mark is', myChain.getBalanceOfAddress('Mark'));
+  console.log('\n Balance of Henry is', myChain.getBalanceOfAddress('Henry'));
+  console.log('\nBalance of Carson is', myChain.getBalanceOfAddress('Carson Address'));
+
+  console.log( '\nStarting the miner again...');
+  myChain.minePendingTransactions('Carson Address');
+
+  console.log('\nBalance of Carson is', myChain.getBalanceOfAddress('Carson Address'));
+
+
+
 
 
 
