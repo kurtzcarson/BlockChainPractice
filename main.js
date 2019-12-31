@@ -25,9 +25,9 @@ myChain.minePendingTransactions(myWalletAddress);
 
 console.log('\nBalance of Carson is', myChain.getBalanceOfAddress(myWalletAddress));
 
-console.log('\n Starting miner again...');
-myChain.minePendingTransactions(myWalletAddress);
-console.log('\nBalance of Carson is', myChain.getBalanceOfAddress(myWalletAddress));
+// console.log('\n Starting miner again...');
+// myChain.minePendingTransactions(myWalletAddress);
+// console.log('\nBalance of Carson is', myChain.getBalanceOfAddress(myWalletAddress));
 
 
 

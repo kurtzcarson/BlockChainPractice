@@ -80,14 +80,17 @@ class Block {
     minePendingTransactions(miningRewardAddress) {
       //if person with mining address successfully finds hash first, then send mining reward to them
 
+      //does not have a from address/ algorithm just gives it to you
+      this.pendingTransactions.push( new Transaction( null, miningRewardAddress, this.miningReward ) )
+
       let block = new Block( Date.now(), this.pendingTransactions )
       block.mineBlock(this.difficulty);
 
       console.log("Block successfully mined.");
       this.chain.push(block);
 
-      //does not have a from address/ algorithm just gives it to you
-      this.pendingTransactions = [ new Transaction(null, miningRewardAddress, this.miningReward ) ];
+      this.pendingTransactions = [];
+
     }
 
     addTransaction(transaction) {
@@ -102,7 +105,7 @@ class Block {
         throw new Error('Cannot pass invalid transaction to the chain');
       }
 
-      //need to verify that the fromAddress has high enough balance to guarentee transaction
+      //still need to verify that the fromAddress has high enough balance to guarentee transaction
       this.pendingTransactions.push(transaction);
 
     }
