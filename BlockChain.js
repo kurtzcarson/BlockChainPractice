@@ -2,6 +2,10 @@
 // very common cryptographic hashing technique developed by the NSA
 const SHA256 = require('crypto-js/sha256');
 
+// utilizing elliptic curves for encrypting data to save space for comparable security
+const EC = require('elliptic').ec;
+const ec = new EC('secp256k1');
+
 // designed to represent our blocks in the blockchain
 class Block {
 
@@ -37,6 +41,18 @@ class Block {
     console.log("Block mined: " + this.hash);
 
   }
+
+  hasValidTransactions() {
+
+    //checks each transaction in the block
+    for (const trans of this.transactions) {
+
+      //if transaction is not valid
+      if (!trans.isValid()) return false;
+    }
+
+    return true;
+  }
 }
 
   class BlockChain {
@@ -46,7 +62,7 @@ class Block {
       this.chain = [this.createGenesisBlock()]; // consider making this a LinkedList
 
       //helps control howcleard fast new blocks can be added to the blockchain
-      this.difficulty = 5;
+      this.difficulty = 2;
 
       //an array that holds all transactions that have yet to be processed as previous blocks are being mined
       this.pendingTransactions = [];
@@ -74,10 +90,21 @@ class Block {
       this.pendingTransactions = [ new Transaction(null, miningRewardAddress, this.miningReward ) ];
     }
 
-    createTransaction(transaction) {
+    addTransaction(transaction) {
 
+      //what if transaction does not have a fromAddress bc being paid?
+      if(!transaction.fromAddress || !transaction.toAddress ) {
+        throw new Error('Transaction must include from and to address');
+      }
+
+      //verify that the transaction is valid
+      if (!transaction.isValid()) {
+        throw new Error('Cannot pass invalid transaction to the chain');
+      }
+
+      //need to verify that the fromAddress has high enough balance to guarentee transaction
       this.pendingTransactions.push(transaction);
-      //need to guarentee that amount of fromAddress is valid and can be paid
+
     }
 
     getBalanceOfAddress(address) {
@@ -116,6 +143,8 @@ class Block {
         const currentBlock = this.chain[i];
         const previousBlock = this.chain[i-1];
 
+        if (!currentBlock.hasValidTransactions()) return false;
+
         if (currentBlock.hash != currentBlock.calculateHash()) {
           return false; //actual hash is not accurate
         }
@@ -136,69 +165,41 @@ class Block {
       this.toAddress = toAddress;
       this.amount = amount;
     }
-  }
+
+    calculateHash() {
+      return SHA256(this.fromAddress + this.toAddress + this.amount).toString()
+    }
+
+    signTransaction(signingKey) {
+
+      if(signingKey.getPublic('hex') != this.fromAddress) {
+        throw new Error("You cannot sign transaction for other wallets");
+      }
+
+      //signingKey is object received from elliptic library i.e ec.genKeyPair();
+      const hashTrans = this.calculateHash();
+      const signiture = signingKey.sign(hashTrans, 'base64');
+      this.signiture = signiture.toDER('hex');
+
+    }
+
+    isValid() {
+
+      //if payment for mining a block with no from address
+      if (this.fromAddress == null) return true;
+
+      //if there is no signiture or is empty
+      if(!this.signiture || this.signiture.length == 0) {
+        throw new Error('No signiture in this transaction.')
+      }
+
+      //if there is a signiture, but need to verify it's correct
+      const publicKey = ec.keyFromPublic(this.fromAddress, 'hex');
+      return publicKey.verify(this.calculateHash(), this.signiture);
+
+    }
+}
 
 
-
-
-  let myChain = new BlockChain();
-
-  //names should be the public key of someone's wallet
-  //these transactions will be pending until they are mined into a block
-  myChain.createTransaction( new Transaction( 'Mark', 'Henry', 100));
-  myChain.createTransaction( new Transaction( 'Henry', 'Mark', 20));
-
-  console.log( '\nStarting the miner.');
-  myChain.minePendingTransactions('Carson Address');
-
-  console.log('\n Balance of Mark is', myChain.getBalanceOfAddress('Mark'));
-  console.log('\n Balance of Henry is', myChain.getBalanceOfAddress('Henry'));
-  console.log('\nBalance of Carson is', myChain.getBalanceOfAddress('Carson Address'));
-
-  console.log( '\nStarting the miner again...');
-  myChain.minePendingTransactions('Carson Address');
-
-  console.log('\nBalance of Carson is', myChain.getBalanceOfAddress('Carson Address'));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  // //data can be anything I want
-  // console.log("Mining Block 1...");
-  // myChain.addBlock( new Block(1, "12/23/2019", {amount: 4}));
-  //
-  // console.log("Mining Block 2...");
-  // myChain.addBlock( new Block(2, "12/24 /2019", {amount: 10}) );
-  //
-  //
-  //
-  // //never delete or change a block to keep the blockChain valid/true
-  // // myChain.chain[1].data = { amount: 100 };
-  // // myChain.chain[1].hash = myChain.chain[1].calculateHash(); // the relationship with previousBlock now broken
-  // //
-  // // console.log('Is blockchain valid? ' + myChain.isChainValid());
-  // //
-  // // console.log(JSON.stringify(myChain, null, 4));
-  //
-  // /*
-  // *
-  // * Things to implement: block breaks chain need to 'rollback changes' and put blockchain back into original state
-  // * Proof of work/ peer to peer network/ need to check if have funds to make a transaction
-  // *
-  // */
+module.exports.BlockChain = BlockChain;
+module.exports.Transaction = Transaction;
