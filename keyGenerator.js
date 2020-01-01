@@ -13,3 +13,13 @@ console.log('Private Key', privateKey);
 
 console.log();
 console.log('Public Key', publicKey);
+
+const key2 = ec.genKeyPair();
+const publicKey2 = key2.getPublic('hex');
+const privateKey2 = key2.getPrivate('hex');
+
+console.log();
+console.log('Private Key', privateKey2);
+
+console.log();
+console.log('Public Key', publicKey2);
